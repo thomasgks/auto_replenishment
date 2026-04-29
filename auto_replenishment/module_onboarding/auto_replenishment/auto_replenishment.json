@@ -1,0 +1,12 @@
+{
+ "app_name": "auto_replenishment",
+ "color": "#1a56db",
+ "custom_modules": [],
+ "doctype": "Module Def",
+ "modified": "2026-02-21 00:00:00",
+ "modified_by": "Administrator",
+ "module_name": "Auto Replenishment",
+ "name": "Auto Replenishment",
+ "owner": "Administrator",
+ "restricted": 0
+}

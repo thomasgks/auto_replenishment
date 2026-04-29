@@ -1,0 +1,33 @@
+{
+ "autoname": "AR-LOG-.YYYY.-.MM.-.###",
+ "creation": "2026-02-21 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "run_date", "run_type", "status", "col1",
+  "total_stores", "processed_stores", "error_count",
+  "notes"
+ ],
+ "fields": [
+  {"fieldname": "run_date", "fieldtype": "Date", "label": "Run Date", "reqd": 1, "in_list_view": 1},
+  {"fieldname": "run_type", "fieldtype": "Select", "label": "Run Type", "options": "Daily\nWeekly\nManual", "in_list_view": 1},
+  {"fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Running\nCompleted\nCompleted with Errors\nFailed", "in_list_view": 1},
+  {"fieldname": "col1", "fieldtype": "Column Break"},
+  {"fieldname": "total_stores", "fieldtype": "Int", "label": "Total Stores"},
+  {"fieldname": "processed_stores", "fieldtype": "Int", "label": "Processed Stores"},
+  {"fieldname": "error_count", "fieldtype": "Int", "label": "Errors"},
+  {"fieldname": "notes", "fieldtype": "Text", "label": "Notes"}
+ ],
+ "links": [],
+ "modified": "2026-02-21 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Auto Replenishment",
+ "name": "Auto Replenishment Log",
+ "owner": "Administrator",
+ "permissions": [
+  {"read": 1, "role": "Stock Manager"},
+  {"read": 1, "role": "Stock User"}
+ ],
+ "sort_field": "run_date",
+ "sort_order": "DESC"
+}

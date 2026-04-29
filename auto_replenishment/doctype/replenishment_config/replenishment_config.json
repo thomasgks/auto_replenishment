@@ -1,0 +1,144 @@
+{
+ "actions": [],
+ "autoname": "Replenishment Config",
+ "creation": "2026-02-21 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_forecast",
+  "demand_history_days",
+  "safety_days",
+  "internal_intransit_lead_time_days",
+  "protection_days",
+  "section_warehouse",
+  "central_warehouse",
+  "section_scheduling",
+  "forecast_schedule",
+  "auto_create_forecast",
+  "section_performance",
+  "batch_size",
+  "parallel_workers",
+  "enable_redis_cache"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_forecast",
+   "fieldtype": "Section Break",
+   "label": "Forecast Parameters"
+  },
+  {
+   "default": "30",
+   "description": "Number of days of sales history used to calculate the average daily selling rate.",
+   "fieldname": "demand_history_days",
+   "fieldtype": "Int",
+   "label": "Demand History Window (Days)",
+   "reqd": 1
+  },
+  {
+   "default": "7",
+   "description": "Default safety buffer days per item (overridable per item/category).",
+   "fieldname": "safety_days",
+   "fieldtype": "Int",
+   "label": "Default Safety Days",
+   "reqd": 1
+  },
+  {
+   "default": "3",
+   "description": "Average internal transfer lead time in days (Warehouse to Store or Store to Store). Used for internal replenishment.",
+   "fieldname": "internal_intransit_lead_time_days",
+   "fieldtype": "Int",
+   "label": "Internal In-Transit Lead Time (Days)",
+   "reqd": 1
+  },
+  {
+   "default": "5",
+   "description": "Minimum days of cover a donor store must retain after any transfer.",
+   "fieldname": "protection_days",
+   "fieldtype": "Int",
+   "label": "Donor Protection Days",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_warehouse",
+   "fieldtype": "Section Break",
+   "label": "Warehouse Settings"
+  },
+  {
+   "description": "The central warehouse that is checked first for all replenishment requests.",
+   "fieldname": "central_warehouse",
+   "fieldtype": "Link",
+   "label": "Central Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_scheduling",
+   "fieldtype": "Section Break",
+   "label": "Scheduling"
+  },
+  {
+   "default": "Daily",
+   "fieldname": "forecast_schedule",
+   "fieldtype": "Select",
+   "label": "Forecast Schedule",
+   "options": "Daily\nWeekly\nManual Only"
+  },
+  {
+   "default": "1",
+   "description": "Automatically generate Material Forecast documents on schedule.",
+   "fieldname": "auto_create_forecast",
+   "fieldtype": "Check",
+   "label": "Auto Create Forecast"
+  },
+  {
+   "fieldname": "section_performance",
+   "fieldtype": "Section Break",
+   "label": "Performance Settings (High Volume)"
+  },
+  {
+   "default": "500",
+   "description": "Number of items processed per database batch. Higher = faster but more memory.",
+   "fieldname": "batch_size",
+   "fieldtype": "Int",
+   "label": "Batch Size (Items per Worker)"
+  },
+  {
+   "default": "4",
+   "description": "Number of parallel background workers for forecast calculation.",
+   "fieldname": "parallel_workers",
+   "fieldtype": "Int",
+   "label": "Parallel Workers"
+  },
+  {
+   "default": "1",
+   "description": "Cache item master data in Redis for duration of forecast run.",
+   "fieldname": "enable_redis_cache",
+   "fieldtype": "Check",
+   "label": "Enable Redis Cache"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-02-21 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Auto Replenishment",
+ "name": "Replenishment Config",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

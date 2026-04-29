@@ -1,0 +1,153 @@
+{
+ "actions": [
+  {
+   "action": "create_material_requests",
+   "label": "Create Material Requests"
+  }
+ ],
+ "autoname": "AR-FCST-.YYYY.-.MM.-.###",
+ "creation": "2026-02-21 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "warehouse",
+  "forecast_date",
+  "status",
+  "column_break_1",
+  "total_items",
+  "created_mr_count",
+  "last_mr_creation",
+  "last_recalculated",
+  "section_summary",
+  "full_supply_count",
+  "partial_supply_count",
+  "no_supply_count",
+  "section_items",
+  "items"
+ ],
+ "fields": [
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Store Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "default": "Today",
+   "fieldname": "forecast_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Forecast Date",
+   "reqd": 1
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "Draft\nSubmitted\nMaterial Requests Created\nClosed"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_items",
+   "fieldtype": "Int",
+   "label": "Total Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "created_mr_count",
+   "fieldtype": "Int",
+   "label": "Material Requests Created",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_mr_creation",
+   "fieldtype": "Datetime",
+   "label": "Last MR Creation",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_recalculated",
+   "fieldtype": "Datetime",
+   "label": "Last Recalculated",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_summary",
+   "fieldtype": "Section Break",
+   "label": "Supply Summary"
+  },
+  {
+   "fieldname": "full_supply_count",
+   "fieldtype": "Int",
+   "label": "Full Supply Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "partial_supply_count",
+   "fieldtype": "Int",
+   "label": "Partial Supply Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "no_supply_count",
+   "fieldtype": "Int",
+   "label": "No Supply Items",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_items",
+   "fieldtype": "Section Break",
+   "label": "Forecast Items"
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Items",
+   "options": "Auto Replenishment Forecast Item"
+  }
+ ],
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-02-21 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Auto Replenishment",
+ "name": "Auto Replenishment Forecast",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "write": 1
+  }
+ ],
+ "sort_field": "forecast_date",
+ "sort_order": "DESC",
+ "title_field": "warehouse",
+ "track_changes": 1
+}

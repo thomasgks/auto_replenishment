@@ -1,0 +1,1 @@
+recursive-include auto_replenishment *.json *.js *.css *.html *.md *.txt
