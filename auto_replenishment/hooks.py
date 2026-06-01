@@ -4,9 +4,11 @@ app_name = "auto_replenishment"
 
 # DocType JS
 doctype_js = {
-    "Replenishment Store Plan": "public/js/replenishment_store_plan.js",
-    "Replenishment Run":        "public/js/replenishment_run.js",
     "Replenishment Config":        "public/js/replenishment_config.js",
+    "Replenishment Store Plan":    "public/js/replenishment_store_plan.js",
+    "Replenishment Run":           "public/js/replenishment_run.js",
+    "Auto Replenishment Log":      "public/js/auto_replenishment_log.js",
+    "Auto Replenishment Forecast": "public/js/auto_replenishment_forecast.js",
 }
 
 app_title       = "Auto Replenishment"
@@ -18,7 +20,6 @@ app_email       = "dev@printechs.com"
 app_license     = "MIT"
 
 # Fixtures — exported/imported with bench migrate
-# custom_field.json lives at auto_replenishment/fixtures/custom_field.json
 fixtures = [
     {
         "doctype": "Custom Field",
@@ -31,7 +32,7 @@ fixtures = [
     {
         "doctype": "Workspace",
         "filters": [["module", "=", "Auto Replenishment"]]
-    }
+    },
 ]
 
 # Scheduled Tasks
