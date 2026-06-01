@@ -28,6 +28,10 @@ fixtures = [
         "doctype": "Property Setter",
         "filters": [["module", "=", "Auto Replenishment"]]
     },
+    {
+        "doctype": "Workspace",
+        "filters": [["module", "=", "Auto Replenishment"]]
+    }
 ]
 
 # Scheduled Tasks
