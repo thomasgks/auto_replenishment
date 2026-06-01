@@ -1,252 +1,211 @@
 """
 auto_replenishment/utils/allocator_agent.py
 
-Allocator Agent — creates Material Requests in ERPNext.
-Called when the Allocator clicks "Create Material Requests" on a forecast.
-
-Logic:
-  1. Re-read live stock data (real-time snapshot)
-  2. Try Central Warehouse first
-  3. If gap remains → evaluate donor stores (DOS fairness check)
-  4. Create one Material Request per supply source
-  5. Mark items as Full / Partial / No Supply
+Step 2 — Create Material Requests from the evaluated allocation plan.
 """
 
 import frappe
 from frappe import _
 from frappe.utils import now_datetime, today
 from datetime import date
-import json
-
-from auto_replenishment.utils.forecast_engine import (
-    evaluate_donor_stores,
-    _get_single_item_onhand,
-    _get_single_item_intransit,
-    _get_single_item_sales,
-)
 
 
-def create_material_requests_for_forecast(forecast_name: str, override_qtys: dict = None) -> dict:
+def create_material_requests_for_forecast(forecast_name: str) -> dict:
     """
-    Main entry point called by the "Create Material Requests" button.
-
-    Args:
-        forecast_name: Name of Auto Replenishment Forecast document
-        override_qtys: Optional {item_code: qty} dict if Allocator has overridden quantities
-
-    Returns:
-        {
-            "created_mrs": [list of MR names],
-            "summary": {item_code: {status, qty_allocated, mrs}},
-            "partial_items": [item_codes],
-            "no_supply_items": [item_codes]
-        }
+    Read the allocation plan and create one Material Request per source warehouse.
+    Uses override_qty when set, else suggested_qty.
     """
-    forecast_doc = frappe.get_doc("Auto Replenishment Forecast", forecast_name)
+    forecast_doc = frappe.get_doc("Replenishment Store Plan", forecast_name)
     config = _get_config()
-    as_of = date.today()
 
-    created_mrs = []
-    item_summaries = {}
+    if forecast_doc.evaluation_status not in (
+        "Evaluation Complete",
+        "Material Requests Created",
+    ):
+        frappe.throw(
+            _("Please run 'Evaluate Allocation' before creating Material Requests.")
+        )
+
+    # {source_warehouse: [item_entries]}
+    mr_batches: dict = {}
     partial_items = []
     no_supply_items = []
 
-    # Group MR items by source warehouse to batch into single MR per source
-    # {source_warehouse: [(item_code, qty, uom, forecast_item_name)]}
-    mr_batches = {}
-
     for fi in forecast_doc.items:
-        item_code = fi.item_code
-        required_qty = override_qtys.get(item_code, fi.forecasted_requirement) if override_qtys else fi.forecasted_requirement
-
-        if required_qty <= 0:
+        if float(fi.forecasted_requirement or 0) <= 0:
             continue
 
-        # ── Real-time recalculation ─────────────────────────────────────────
-        live_onhand = _get_single_item_onhand(item_code, forecast_doc.warehouse)
-        live_intransit = _get_single_item_intransit(
-            item_code, forecast_doc.warehouse, as_of,
-            config.get("internal_intransit_lead_time_days", 3)
+        alloc_rows = frappe.get_all(
+            "Replenishment Allocation",
+            filters={
+                "parent": forecast_doc.name,
+                "forecast_item_ref": fi.name,
+                "excluded": 0,
+            },
+            fields=["source_warehouse", "suggested_qty", "override_qty", "source_type"],
+            order_by="source_type asc, idx asc",
         )
-        live_effective = live_onhand + live_intransit
 
-        # Recalculate requirement based on live data
-        live_target = fi.target_stock  # Use original target (doesn't change)
-        live_requirement = max(0, live_target - live_effective)
-
-        if live_requirement <= 0:
-            fi.db_set("supply_status", "No Longer Required")
+        if not alloc_rows:
+            fi.db_set("supply_status", "No Supply")
+            no_supply_items.append(fi.item_code)
             continue
 
-        gap = live_requirement
-        allocated_sources = []  # [(source_wh, qty)]
-
-        # ── Step 1: Check Central Warehouse ────────────────────────────────
-        wh_available = _get_warehouse_available_qty(
-            item_code, config["central_warehouse"]
-        )
-
-        if wh_available > 0:
-            wh_alloc = min(wh_available, gap)
-            allocated_sources.append((config["central_warehouse"], wh_alloc))
-            gap -= wh_alloc
-
-        # ── Step 2: Donor Store Allocation (if gap remains) ────────────────
-        if gap > 0:
-            donors = evaluate_donor_stores(
-                item_code, forecast_doc.warehouse, gap, config, as_of
+        total_allocated = 0
+        for row in alloc_rows:
+            qty = (
+                float(row.override_qty or 0)
+                if float(row.override_qty or 0) > 0
+                else float(row.suggested_qty or 0)
             )
+            if qty <= 0:
+                continue
+            if row.source_warehouse not in mr_batches:
+                mr_batches[row.source_warehouse] = []
+            mr_batches[row.source_warehouse].append(
+                {
+                    "item_code": fi.item_code,
+                    "qty": qty,
+                    "uom": fi.uom or "Nos",
+                    "forecast_item": fi.name,
+                    "target_warehouse": forecast_doc.warehouse,
+                }
+            )
+            total_allocated += qty
 
-            for donor in donors:
-                if gap <= 0:
-                    break
-                if not donor["fairness_pass"]:
-                    continue
-                take_qty = min(donor["transferable_qty"], gap)
-                if take_qty > 0:
-                    allocated_sources.append((donor["warehouse"], take_qty))
-                    gap -= take_qty
-
-        # ── Determine supply status ─────────────────────────────────────────
-        total_allocated = sum(q for _, q in allocated_sources)
-
+        required = float(fi.forecasted_requirement or 0)
         if total_allocated <= 0:
-            supply_status = "No Supply"
-            no_supply_items.append(item_code)
-        elif total_allocated < live_requirement * 0.999:  # 0.1% tolerance
-            supply_status = "Partial Supply"
-            partial_items.append(item_code)
+            fi.db_set("supply_status", "No Supply")
+            no_supply_items.append(fi.item_code)
+        elif total_allocated < required * 0.999:
+            fi.db_set("supply_status", "Partial Supply")
+            partial_items.append(fi.item_code)
         else:
-            supply_status = "Full Supply"
+            fi.db_set("supply_status", "Full Supply")
 
-        # ── Queue items into MR batches (one MR per source per forecast) ────
-        for source_wh, alloc_qty in allocated_sources:
-            if source_wh not in mr_batches:
-                mr_batches[source_wh] = []
-            mr_batches[source_wh].append({
-                "item_code": item_code,
-                "qty": alloc_qty,
-                "uom": fi.uom,
-                "forecast_item": fi.name
-            })
-
-        # Update forecast item
-        fi.db_set("supply_status", supply_status)
         fi.db_set("allocated_qty", total_allocated)
-        fi.db_set("shortage_qty", max(0, live_requirement - total_allocated))
+        fi.db_set("shortage_qty", max(0, required - total_allocated))
 
-        item_summaries[item_code] = {
-            "status": supply_status,
-            "required": live_requirement,
-            "allocated": total_allocated,
-            "shortage": max(0, live_requirement - total_allocated),
-            "sources": [{"warehouse": w, "qty": q} for w, q in allocated_sources]
-        }
-
-    # ── Step 3: Create one Material Request per source warehouse ───────────
+    created_mrs = []
     for source_wh, items in mr_batches.items():
         mr_name = _create_material_request(
             source_warehouse=source_wh,
             target_warehouse=forecast_doc.warehouse,
             items=items,
-            forecast_name=forecast_name
+            forecast_name=forecast_name,
         )
-        created_mrs.append(mr_name)
+        if mr_name:
+            created_mrs.append(mr_name)
 
-        # Link MR name back to item summaries
-        for item_entry in items:
-            if item_entry["item_code"] in item_summaries:
-                item_summaries[item_entry["item_code"]].setdefault("mrs", []).append(mr_name)
+    frappe.db.commit()
 
-    # ── Update forecast document status ────────────────────────────────────
-    if created_mrs:
-        forecast_doc.db_set("status", "Material Requests Created")
-        forecast_doc.db_set("last_mr_creation", now_datetime())
-        forecast_doc.db_set("created_mr_count", len(created_mrs))
-
-    # Log summary
     frappe.logger().info(
-        f"[AutoReplenishment] Forecast {forecast_name}: "
-        f"{len(created_mrs)} MRs created, "
-        f"{len(partial_items)} partial, "
-        f"{len(no_supply_items)} no supply"
+        f"[AR] {forecast_name}: {len(created_mrs)} MRs, "
+        f"{len(partial_items)} partial, {len(no_supply_items)} no supply"
     )
 
     return {
         "created_mrs": created_mrs,
-        "summary": item_summaries,
+        "mr_count": len(created_mrs),
         "partial_items": partial_items,
         "no_supply_items": no_supply_items,
-        "mr_count": len(created_mrs)
     }
 
 
 def _create_material_request(
-    source_warehouse: str,
-    target_warehouse: str,
-    items: list,
-    forecast_name: str
+    source_warehouse: str, target_warehouse: str, items: list, forecast_name: str
 ) -> str:
     """
-    Create a single Material Request in ERPNext.
-    Type = 'Material Transfer' for internal moves.
+    Create and SAVE (docstatus=0, Draft) a Material Request.
+
+    Key fields for Material Transfer in ERPNext v15:
+      - material_request_type = "Material Transfer"
+      - set_from_warehouse    = source (header level — shown in list view)
+      - set_warehouse         = destination store (header level)
+      - items[].from_warehouse = source (item level)
+      - items[].warehouse      = destination (item level)
+
+    We save as Draft (not submitted) so the warehouse team can review
+    and process it. The forecast tracks the link.
     """
+    if not items:
+        return None
+
+    company = frappe.defaults.get_user_default("Company") or frappe.db.get_single_value(
+        "Global Defaults", "default_company"
+    )
+    if not company:
+        frappe.throw(_("Default Company not set. Please set it in Global Defaults."))
+
+    src_abbr = (
+        source_warehouse.split(" - ")[0]
+        if " - " in source_warehouse
+        else source_warehouse[:20]
+    )
+    tgt_abbr = (
+        target_warehouse.split(" - ")[0]
+        if " - " in target_warehouse
+        else target_warehouse[:20]
+    )
+
     mr = frappe.new_doc("Material Request")
     mr.material_request_type = "Material Transfer"
     mr.transaction_date = today()
     mr.schedule_date = today()
-    mr.company = frappe.defaults.get_user_default("Company") or frappe.db.get_single_value("Global Defaults", "default_company")
+    mr.company = company
+    mr.title = f"AR: {src_abbr} → {tgt_abbr}"
+
+    # Header-level warehouse fields — these make the MR appear correctly
+    # in the Material Request list and filter views
+    mr.set_from_warehouse = source_warehouse  # source (for Material Transfer)
+    mr.set_warehouse = target_warehouse  # destination store
+
+    # Custom tracking fields
     mr.custom_auto_replenishment_forecast = forecast_name
     mr.custom_source_warehouse = source_warehouse
 
-    # Set title for easy identification
-    source_abbr = source_warehouse.split(" - ")[0] if " - " in source_warehouse else source_warehouse[:20]
-    target_abbr = target_warehouse.split(" - ")[0] if " - " in target_warehouse else target_warehouse[:20]
-    mr.title = f"AR: {source_abbr} → {target_abbr}"
-
     for item_entry in items:
-        mr.append("items", {
-            "item_code": item_entry["item_code"],
-            "qty": item_entry["qty"],
-            "uom": item_entry["uom"],
-            "warehouse": target_warehouse,  # Destination
-            "from_warehouse": source_warehouse,
-            "custom_forecast_item": item_entry.get("forecast_item"),
-        })
+        mr.append(
+            "items",
+            {
+                "item_code": item_entry["item_code"],
+                "qty": item_entry["qty"],
+                "uom": item_entry.get("uom", "Nos"),
+                "warehouse": item_entry.get("target_warehouse", target_warehouse),
+                "from_warehouse": source_warehouse,
+                "custom_forecast_item": item_entry.get("forecast_item", ""),
+            },
+        )
 
-    mr.insert(ignore_permissions=True)
-    mr.submit()
-    return mr.name
-
-
-def _get_warehouse_available_qty(item_code: str, warehouse: str) -> float:
-    """
-    Available = actual_qty - reserved_qty (for warehouse).
-    Uses Bin table for live data.
-    """
-    result = frappe.db.get_value(
-        "Bin",
-        {"item_code": item_code, "warehouse": warehouse},
-        ["actual_qty", "reserved_qty"],
-        as_dict=True
-    )
-    if not result:
-        return 0.0
-    return max(0.0, float(result.get("actual_qty", 0)) - float(result.get("reserved_qty", 0)))
+    try:
+        mr.insert(ignore_permissions=True)
+        # Save as Draft — warehouse team reviews and submits themselves
+        frappe.logger().info(
+            f"[AR] Created MR {mr.name}: {source_warehouse} → {target_warehouse}"
+        )
+        return mr.name
+    except Exception as e:
+        frappe.log_error(
+            f"Failed to create MR for {source_warehouse} → {target_warehouse}: {e}\n"
+            f"{frappe.get_traceback()}",
+            "AR MR Creation Error",
+        )
+        frappe.throw(_("Failed to create Material Request: {0}").format(str(e)))
 
 
 def _get_config() -> dict:
-    """Load Replenishment Config as dict."""
     try:
         cfg = frappe.get_single("Replenishment Config")
         return {
             "demand_history_days": cfg.demand_history_days or 30,
             "safety_days": cfg.safety_days or 7,
-            "internal_intransit_lead_time_days": cfg.internal_intransit_lead_time_days or 3,
+            "internal_intransit_lead_time_days": cfg.internal_intransit_lead_time_days
+            or 3,
             "protection_days": cfg.protection_days or 5,
             "central_warehouse": cfg.central_warehouse,
-            "batch_size": cfg.batch_size or 500,
-            "parallel_workers": cfg.parallel_workers or 4,
+            "quantity_rounding": cfg.quantity_rounding or "Ceil (Round Up)",
         }
     except Exception:
-        frappe.throw(_("Replenishment Config is not set up. Please configure it first."))
+        frappe.throw(
+            _("Replenishment Config is not set up. Please configure it first.")
+        )

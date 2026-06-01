@@ -1,0 +1,20 @@
+[
+ {
+  "doctype": "Custom Field",
+  "name": "Warehouse-custom_replenishment_role",
+  "dt": "Warehouse",
+  "module": "Auto Replenishment",
+  "fieldname": "custom_replenishment_role",
+  "label": "Replenishment Role",
+  "fieldtype": "Select",
+  "options": "\nRetail Store\nCentral Warehouse\nGoods In Transit\nExclude",
+  "insert_after": "warehouse_type",
+  "description": "Retail Store: forecasted and replenished. Central Warehouse: source only. Goods In Transit: stock counted as in-transit. Exclude: ignored completely.",
+  "in_standard_filter": 1,
+  "permlevel": 0,
+  "hidden": 0,
+  "reqd": 0,
+  "read_only": 0,
+  "allow_in_quick_entry": 0
+ }
+]

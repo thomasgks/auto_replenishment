@@ -1,0 +1,131 @@
+{
+ "actions": [],
+ "creation": "2026-02-21 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "store_warehouse",
+  "status",
+  "col1",
+  "queued_at",
+  "started_at",
+  "completed_at",
+  "duration_seconds",
+  "col2",
+  "items_eligible",
+  "items_requiring_replenishment",
+  "forecast_doc",
+  "col3",
+  "log_file_path",
+  "store_plan"
+ ],
+ "fields": [
+  {
+   "fieldname": "store_warehouse",
+   "fieldtype": "Link",
+   "label": "Store Warehouse",
+   "options": "Warehouse",
+   "reqd": 1,
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Queued\nRunning\nCompleted\nCompleted (No Items)\nSkipped (Already Exists)\nFailed",
+   "in_list_view": 1,
+   "bold": 1
+  },
+  {
+   "fieldname": "col1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "queued_at",
+   "fieldtype": "Datetime",
+   "label": "Queued At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "started_at",
+   "fieldtype": "Datetime",
+   "label": "Started At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "completed_at",
+   "fieldtype": "Datetime",
+   "label": "Completed At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "duration_seconds",
+   "fieldtype": "Float",
+   "label": "Duration (sec)",
+   "read_only": 1,
+   "precision": "1"
+  },
+  {
+   "fieldname": "col2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "items_eligible",
+   "fieldtype": "Int",
+   "label": "Eligible Items",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "items_requiring_replenishment",
+   "fieldtype": "Int",
+   "label": "Items Needing Replenishment",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "forecast_doc",
+   "fieldtype": "Link",
+   "label": "Store Plan",
+   "options": "Replenishment Store Plan",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "log_file_path",
+   "fieldtype": "Data",
+   "label": "Log File Path",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "store_plan",
+   "fieldtype": "Link",
+   "label": "Store Plan",
+   "options": "Replenishment Store Plan",
+   "read_only": 1,
+   "in_list_view": 0,
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-04-30 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Auto Replenishment",
+ "name": "Replenishment Run Store",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "store_warehouse",
+ "sort_order": "ASC"
+}

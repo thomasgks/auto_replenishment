@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: auto_replenishment
+Version: 1.0.0
+Summary: Auto Replenishment — Material Forecast & Material Request for ERPNext
+Author: Printechs
+Author-email: dev@printechs.com
+Requires-Dist: frappe
+Requires-Dist: pandas>=1.5.0
+Requires-Dist: numpy>=1.23.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: requires-dist
+Dynamic: summary

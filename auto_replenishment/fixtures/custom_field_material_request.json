@@ -1,0 +1,26 @@
+[
+ {
+  "doctype": "Custom Field",
+  "name": "Material Request-custom_supplier",
+  "dt": "Material Request",
+  "module": "Auto Replenishment",
+  "fieldname": "custom_supplier",
+  "label": "Supplier",
+  "fieldtype": "Link",
+  "options": "Supplier",
+  "insert_after": "material_request_type",
+  "depends_on": "eval:doc.material_request_type == 'Purchase'",
+  "description": "Populated by Auto Replenishment for supplier-based Purchase MRs. Used to auto-fill Supplier when creating a Purchase Order from this MR.",
+  "in_standard_filter": 0,
+  "permlevel": 0,
+  "hidden": 0,
+  "reqd": 0,
+  "read_only": 0,
+  "allow_in_quick_entry": 0,
+  "print_hide": 0,
+  "report_hide": 0,
+  "bold": 0,
+  "in_list_view": 0,
+  "in_global_search": 0
+ }
+]

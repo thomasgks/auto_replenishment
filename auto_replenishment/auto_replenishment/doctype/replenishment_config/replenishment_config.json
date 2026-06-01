@@ -1,0 +1,399 @@
+{
+ "actions": [],
+ "autoname": "Replenishment Config",
+ "creation": "2026-02-21 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_forecast",
+  "demand_history_days",
+  "safety_days",
+  "internal_intransit_lead_time_days",
+  "protection_days",
+  "quantity_rounding",
+  "section_warehouse",
+  "central_warehouse",
+  "section_scheduling",
+  "forecast_schedule",
+  "auto_create_forecast",
+  "section_allocation",
+  "allocation_algorithm",
+  "col_alloc1",
+  "enable_auto_allocation",
+  "auto_submit_mrs",
+  "section_shortage_mr",
+  "create_purchase_mrs",
+  "mr_per_supplier",
+  "col_shortage1",
+  "shortage_mr_naming",
+  "section_scheduler_filters",
+  "scheduler_year",
+  "scheduler_season",
+  "col_sched1",
+  "scheduler_store_filter_mode",
+  "scheduler_suppliers",
+  "scheduler_item_groups_l4",
+  "scheduler_item_groups_l5",
+  "scheduler_stores",
+  "section_performance",
+  "batch_size",
+  "parallel_workers",
+  "enable_redis_cache"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_forecast",
+   "fieldtype": "Section Break",
+   "label": "Forecast Parameters"
+  },
+  {
+   "default": "30",
+   "description": "Number of days of sales history used to calculate the average daily selling rate.",
+   "fieldname": "demand_history_days",
+   "fieldtype": "Int",
+   "label": "Demand History Window (Days)",
+   "reqd": 1
+  },
+  {
+   "default": "7",
+   "description": "Default safety buffer days per item (overridable per item/category).",
+   "fieldname": "safety_days",
+   "fieldtype": "Int",
+   "label": "Default Safety Days",
+   "reqd": 1
+  },
+  {
+   "default": "3",
+   "description": "Average internal transfer lead time in days (Warehouse to Store or Store to Store). Used for internal replenishment.",
+   "fieldname": "internal_intransit_lead_time_days",
+   "fieldtype": "Int",
+   "label": "Internal In-Transit Lead Time (Days)",
+   "reqd": 1
+  },
+  {
+   "default": "5",
+   "description": "Minimum days of cover a donor store must retain after any transfer.",
+   "fieldname": "protection_days",
+   "fieldtype": "Int",
+   "label": "Donor Protection Days",
+   "reqd": 1
+  },
+  {
+   "default": "Ceil (Round Up)",
+   "description": "How forecasted requirement quantities are rounded to whole numbers. Ceil = always round up (recommended for apparel/shoes \u2014 never under-order). Round = standard mathematical rounding. None = keep decimals (only for items sold by weight/volume).",
+   "fieldname": "quantity_rounding",
+   "fieldtype": "Select",
+   "label": "Quantity Rounding",
+   "options": "Ceil (Round Up)\nRound (Nearest)\nFloor (Round Down)\nNo Rounding",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_warehouse",
+   "fieldtype": "Section Break",
+   "label": "Warehouse Settings"
+  },
+  {
+   "description": "The central warehouse that is checked first for all replenishment requests.",
+   "fieldname": "central_warehouse",
+   "fieldtype": "Link",
+   "label": "Central Warehouse",
+   "options": "Warehouse",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_scheduling",
+   "fieldtype": "Section Break",
+   "label": "Scheduling"
+  },
+  {
+   "default": "Daily",
+   "fieldname": "forecast_schedule",
+   "fieldtype": "Select",
+   "label": "Forecast Schedule",
+   "options": "Daily\nWeekly\nManual Only"
+  },
+  {
+   "default": "1",
+   "description": "Automatically generate Material Forecast documents on schedule.",
+   "fieldname": "auto_create_forecast",
+   "fieldtype": "Check",
+   "label": "Auto Create Forecast"
+  },
+  {
+   "fieldname": "section_performance",
+   "fieldtype": "Section Break",
+   "label": "Performance Settings (High Volume)"
+  },
+  {
+   "default": "500",
+   "description": "Number of items processed per database batch. Higher = faster but more memory.",
+   "fieldname": "batch_size",
+   "fieldtype": "Int",
+   "label": "Batch Size (Items per Worker)"
+  },
+  {
+   "default": "4",
+   "description": "Number of parallel background workers for forecast calculation.",
+   "fieldname": "parallel_workers",
+   "fieldtype": "Int",
+   "label": "Parallel Workers"
+  },
+  {
+   "default": "1",
+   "description": "Cache item master data in Redis for duration of forecast run.",
+   "fieldname": "enable_redis_cache",
+   "fieldtype": "Check",
+   "label": "Enable Redis Cache"
+  },
+  {
+   "fieldname": "section_allocation",
+   "fieldtype": "Section Break",
+   "label": "Allocation Settings",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "allocation_algorithm",
+   "fieldtype": "Select",
+   "label": "Default Allocation Algorithm",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Winner Takes All\nPro-rata\nDOS Equalisation",
+   "default": "Pro-rata"
+  },
+  {
+   "fieldname": "col_alloc1",
+   "fieldtype": "Column Break",
+   "label": "",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "enable_auto_allocation",
+   "fieldtype": "Check",
+   "label": "Auto-run Allocation after Forecast (Scheduler)",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "auto_submit_mrs",
+   "fieldtype": "Check",
+   "label": "Auto-submit Transfer Material Requests",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "section_shortage_mr",
+   "fieldtype": "Section Break",
+   "label": "Purchase MR Settings",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "create_purchase_mrs",
+   "fieldtype": "Check",
+   "label": "Create Purchase MRs for Shortage Items",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "default": "1"
+  },
+  {
+   "fieldname": "mr_per_supplier",
+   "fieldtype": "Check",
+   "label": "One MR per Supplier",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "default": "1"
+  },
+  {
+   "fieldname": "col_shortage1",
+   "fieldtype": "Column Break",
+   "label": "",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "shortage_mr_naming",
+   "fieldtype": "Select",
+   "label": "Purchase MR Title Format",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Supplier Name\nRun Reference + Supplier",
+   "default": "Run Reference + Supplier"
+  },
+  {
+   "fieldname": "section_scheduler_filters",
+   "fieldtype": "Section Break",
+   "label": "Scheduler Forecast Filters",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "scheduler_year",
+   "fieldtype": "Table",
+   "label": "Year Filter",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Replenishment Config Year",
+   "description": "Filter scheduled runs by item variant Year attribute"
+  },
+  {
+   "fieldname": "scheduler_season",
+   "fieldtype": "Table",
+   "label": "Season Filter",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Replenishment Config Season",
+   "description": "Filter scheduled runs by item variant Season attribute"
+  },
+  {
+   "fieldname": "col_sched1",
+   "fieldtype": "Column Break",
+   "label": "",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0
+  },
+  {
+   "fieldname": "scheduler_store_filter_mode",
+   "fieldtype": "Select",
+   "label": "Store Filter Mode",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "All Stores\nSelected Stores",
+   "default": "All Stores"
+  },
+  {
+   "fieldname": "scheduler_suppliers",
+   "fieldtype": "Table",
+   "label": "Supplier Filter",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Replenishment Config Supplier"
+  },
+  {
+   "fieldname": "scheduler_item_groups_l4",
+   "fieldtype": "Table",
+   "label": "Item Group Level 4",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Replenishment Config Item Group"
+  },
+  {
+   "fieldname": "scheduler_item_groups_l5",
+   "fieldtype": "Table",
+   "label": "Item Group Level 5",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Replenishment Config Item Group"
+  },
+  {
+   "fieldname": "scheduler_stores",
+   "fieldtype": "Table",
+   "label": "Selected Stores",
+   "permlevel": 0,
+   "hidden": 0,
+   "print_hide": 0,
+   "report_hide": 0,
+   "reqd": 0,
+   "allow_in_quick_entry": 0,
+   "options": "Replenishment Config Store",
+   "depends_on": "eval:doc.scheduler_store_filter_mode=='Selected Stores'"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-02-21 00:00:00",
+ "modified_by": "Administrator",
+ "module": "Auto Replenishment",
+ "name": "Replenishment Config",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 0,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}

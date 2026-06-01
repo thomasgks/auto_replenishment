@@ -20,9 +20,11 @@ def create_material_requests(forecast_name: str, override_qtys: str = None):
     Button handler: Create Material Requests for a forecast.
     Called from the Forecast form's 'Create Material Requests' button.
     """
-    from auto_replenishment.utils.allocator_agent import create_material_requests_for_forecast
+    from auto_replenishment.utils.allocator_agent import (
+        create_material_requests_for_forecast,
+    )
 
-    if not frappe.has_permission("Auto Replenishment Forecast", "write"):
+    if not frappe.has_permission("Replenishment Store Plan", "write"):
         frappe.throw(_("Insufficient permissions."), frappe.PermissionError)
 
     parsed_overrides = {}
@@ -39,17 +41,18 @@ def create_material_requests(forecast_name: str, override_qtys: str = None):
 @frappe.whitelist()
 def trigger_manual_forecast():
     """Trigger a manual forecast run for all stores."""
-    if not frappe.has_permission("Auto Replenishment Forecast", "create"):
+    if not frappe.has_permission("Replenishment Store Plan", "create"):
         frappe.throw(_("Insufficient permissions."), frappe.PermissionError)
 
     from auto_replenishment.tasks.scheduler import trigger_manual_forecast as _trigger
+
     return _trigger()
 
 
 @frappe.whitelist()
 def generate_forecast_single_store(warehouse: str):
     """Generate forecast for a single store on demand."""
-    if not frappe.has_permission("Auto Replenishment Forecast", "create"):
+    if not frappe.has_permission("Replenishment Store Plan", "create"):
         frappe.throw(_("Insufficient permissions."), frappe.PermissionError)
 
     from auto_replenishment.tasks.scheduler import generate_forecast_for_store
@@ -58,7 +61,8 @@ def generate_forecast_single_store(warehouse: str):
     config = {
         "demand_history_days": config_doc.demand_history_days or 30,
         "safety_days": config_doc.safety_days or 7,
-        "internal_intransit_lead_time_days": config_doc.internal_intransit_lead_time_days or 3,
+        "internal_intransit_lead_time_days": config_doc.internal_intransit_lead_time_days
+        or 3,
         "protection_days": config_doc.protection_days or 5,
         "central_warehouse": config_doc.central_warehouse,
         "batch_size": config_doc.batch_size or 500,
@@ -68,11 +72,11 @@ def generate_forecast_single_store(warehouse: str):
         "auto_replenishment.tasks.scheduler.generate_forecast_for_store",
         queue="long",
         timeout=3600,
+        enqueue_after_commit=True,
         warehouse=warehouse,
         config=config,
         log_name="manual",
         run_date=today(),
-        is_async=True
     )
 
     return {"message": f"Forecast job enqueued for {warehouse}"}
@@ -87,12 +91,13 @@ def get_donor_analysis(forecast_name: str, item_code: str):
     from auto_replenishment.utils.forecast_engine import evaluate_donor_stores
     from datetime import date
 
-    doc = frappe.get_doc("Auto Replenishment Forecast", forecast_name)
+    doc = frappe.get_doc("Replenishment Store Plan", forecast_name)
     config_doc = frappe.get_single("Replenishment Config")
     config = {
         "demand_history_days": config_doc.demand_history_days or 30,
         "safety_days": config_doc.safety_days or 7,
-        "internal_intransit_lead_time_days": config_doc.internal_intransit_lead_time_days or 3,
+        "internal_intransit_lead_time_days": config_doc.internal_intransit_lead_time_days
+        or 3,
         "protection_days": config_doc.protection_days or 5,
         "central_warehouse": config_doc.central_warehouse,
     }
@@ -108,11 +113,7 @@ def get_donor_analysis(forecast_name: str, item_code: str):
         return {"donors": [], "message": "No requirement for this item."}
 
     donors = evaluate_donor_stores(item_code, doc.warehouse, gap, config, date.today())
-    return {
-        "donors": donors,
-        "gap": gap,
-        "item_code": item_code
-    }
+    return {"donors": donors, "gap": gap, "item_code": item_code}
 
 
 @frappe.whitelist()
@@ -126,7 +127,8 @@ def get_supply_status_report(from_date: str = None, to_date: str = None):
     if not to_date:
         to_date = today()
 
-    rows = frappe.db.sql("""
+    rows = frappe.db.sql(
+        """
         SELECT
             f.warehouse,
             f.forecast_date,
@@ -142,7 +144,10 @@ def get_supply_status_report(from_date: str = None, to_date: str = None):
           AND fi.supply_status IN ('Partial Supply', 'No Supply')
           AND f.docstatus != 2
         ORDER BY f.forecast_date DESC, fi.supply_status, f.warehouse
-    """, {"from_date": from_date, "to_date": to_date}, as_dict=True)
+    """,
+        {"from_date": from_date, "to_date": to_date},
+        as_dict=True,
+    )
 
     return rows
 
@@ -150,7 +155,8 @@ def get_supply_status_report(from_date: str = None, to_date: str = None):
 @frappe.whitelist()
 def get_forecast_dashboard_data():
     """Dashboard summary data for the Auto Replenishment module."""
-    data = frappe.db.sql("""
+    data = frappe.db.sql(
+        """
         SELECT
             COUNT(DISTINCT f.name) AS total_forecasts,
             SUM(CASE WHEN fi.supply_status = 'Full Supply' THEN 1 ELSE 0 END) AS full_supply,
@@ -161,6 +167,9 @@ def get_forecast_dashboard_data():
         JOIN `tabAuto Replenishment Forecast Item` fi ON fi.parent = f.name
         WHERE f.forecast_date = %(today)s
           AND f.docstatus != 2
-    """, {"today": today()}, as_dict=True)
+    """,
+        {"today": today()},
+        as_dict=True,
+    )
 
     return data[0] if data else {}
